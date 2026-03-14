@@ -5,8 +5,8 @@
 ### 1. Clone this repo
 
 ```bash
-git clone <REPO_URL>
-cd ai_science_hack_2026
+git clone https://github.com/OrthoDim/Cereal-Delusion.git
+cd Cereal-Delusion
 ```
 
 ### 2. Clone reference repositories
