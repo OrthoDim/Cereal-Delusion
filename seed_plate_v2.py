@@ -63,7 +63,7 @@ SERIAL_ROWS       = list("ABCDEFGH")
 # Heights
 ASPIRATE_24WELL   = 0.5    # mm — aspirate from 24-well deepwell
 DISPENSE_24WELL   = 2.0    # mm — dispense into 24-well deepwell
-ASPIRATE_96WP     = 0.7    # mm — aspirate from 96wp
+ASPIRATE_96WP     = 0.5    # mm — aspirate from 96wp
 DISPENSE_96WP     = 2.0    # mm — dispense into 96wp flat bottom (between 0.5-1.0)
 
 # Seeding settings
