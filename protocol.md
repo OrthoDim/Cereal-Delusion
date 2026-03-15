@@ -49,27 +49,32 @@
 
 ---
 
-## Phase 2.5: Aliquot into Target Wells (~3 min)
+## Phase 2.5: Make Working Dilution in C1 + Aliquot (~5 min)
 
-**Goal:** Dispense working dilution into target wells for single-cell isolation (e.g. 24 wells).
+**Goal:** Use imaging result to calculate exact dilution needed for 1 cell per 80µL well. Build that dilution in 24-well C1, then aliquot into 8 wells of the 96wp.
 
 | Step | Action | Volume | Notes |
 |------|--------|--------|-------|
-| 15 | Pick up fresh P300 tip per well | — | One tip per well |
-| 16 | Mix 24-well D1 × 3 every 8 wells | 150 µL | Beads settle fast! |
-| 17 | Aspirate from 24-well D1 | 100 µL or 50 µL | Set via `ALIQUOT_VOL` env var |
-| 18 | Dispense into target well | 100 µL or 50 µL | First 24 wells = A1→H3 |
-| 19 | Discard tip | — | Fresh tip every well |
+| 15 | Calculate stock transfer volume | X µL | From JSON: `STOCK_CONC` cells/µL in A1 → target = 1 cell/80µL |
+| 16 | P300: mix A1 5×, transfer X µL from A1 → C1 | X µL (min 20µL) | Fresh tip |
+| 17 | P300: add buffer from B1 → C1 (180µL trips) | ~1100 µL total | Multiple trips if needed |
+| 18 | P1000: mix C1 5× at 800µL | 800 µL | Breaks up clumps |
+| 19 | P300 single tip: aspirate 80µL from C1 → each of 8 wells (A1–H1) | 80 µL/well | Mix C1 every 8 wells |
+| 20 | Discard tip | — | — |
 
 ```bash
-# 100 µL into 24 wells (default):
+# Read directly from classifier JSON (recommended):
+JSON=annotated_output_*/concentration_results_*.json \
 OT2_HOST=192.168.68.101 python aliquot_wells.py
 
-# 50 µL into 24 wells:
-ALIQUOT_VOL=50 N_WELLS=24 OT2_HOST=192.168.68.101 python aliquot_wells.py
+# Manual override:
+STOCK_CONC=4.0 OT2_HOST=192.168.68.101 python aliquot_wells.py
+
+# Dry run to verify math first:
+DRY_RUN=true JSON=annotated_output_*/concentration_results_*.json python aliquot_wells.py
 ```
 
-🔬 **Hand plate to Squid. Image all target wells. AI classifies: empty / single / multiple / uncertain.**
+🔬 **Hand plate to Squid. Image col 1 (A1–H1). AI classifies: empty / single / multiple / uncertain.**
 
 ---
 

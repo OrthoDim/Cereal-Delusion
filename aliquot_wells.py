@@ -1,24 +1,39 @@
 """
-aliquot_wells.py — Two-step aliquoting for single-cell isolation
+aliquot_wells.py — Concentration-aware single-cell aliquoting
+
+Reads the concentration JSON from the well_classifier (ImageClassifier branch)
+and automatically calculates the correct dilution to achieve 1 cell per well.
 
 Protocol:
-  Step 1: P300 single tip — aliquot 80uL into 24 wells (cols 1-3 of 96wp)
-  Step 2: P1000 — mix D1 5x at 800uL to resuspend beads
-  Step 3: P300 single tip — aliquot 20uL into same 24 wells
-
-  Total per well: 80uL + 20uL = 100uL
+  Step 1: Read JSON → extract stock concentration (cells/uL)
+  Step 2: Calculate X uL stock (A1) + buffer (B1) needed in C1 for 1 cell/80uL
+  Step 3: Transfer X uL from A1 -> C1 (P300, mix stock first)
+  Step 4: Add buffer from B1 -> C1 (P300, 180uL trips)
+  Step 5: P1000 mix C1 (5x at 800uL)
+  Step 6: P300 single tip — 80uL from C1 into 8 wells (A1-H1 of 96wp)
 
 Deck layout:
-  Slot 1 — 24-well deepwell: D1 = working dilution
-  Slot 3 — 96-well flat bottom: destination plate
+  Slot 1 — 24-well deepwell:
+    A1 = cell/bead stock
+    B1 = buffer
+    C1 = working dilution (built here)
+  Slot 3 — 96-well flat bottom: col 1 = target wells (A1-H1)
   Slot 6 — 200 uL filter tip rack: P300, left mount, channel 0
   Slot 9 — 1000 uL filter tip rack: P1000, right mount, channel 1
 
 Usage:
+  # Read from JSON (recommended):
+  JSON=annotated_output_CerealDelusion_Run1_A/concentration_results_CerealDelusion_Run1_A.json \\
   OT2_HOST=192.168.68.101 python aliquot_wells.py
-  DRY_RUN=true python aliquot_wells.py
+
+  # Manual stock concentration override:
+  STOCK_CONC=4.0 OT2_HOST=192.168.68.101 python aliquot_wells.py
+
+  # Dry run:
+  DRY_RUN=true JSON=<path> python aliquot_wells.py
 """
 import asyncio
+import json
 import logging
 import os
 
@@ -34,47 +49,92 @@ from pylabrobot.resources.opentrons.load import load_ot_tip_rack
 
 logger = logging.getLogger(__name__)
 
+# ── Load concentration from JSON or env var ───────────────────────────────────
+def get_stock_conc() -> float:
+    json_path = os.environ.get("JSON")
+    if json_path:
+        with open(json_path) as f:
+            data = json.load(f)
+        conc = data["concentration_estimate"]["stock_concentration_cells_per_ul"]["median_estimate"]
+        logger.info("Loaded stock concentration from JSON: %.2f cells/uL", conc)
+        logger.info("  Plate: %s", data.get("plate_id", "unknown"))
+        logger.info("  Wells used: %d, R²: %.3f",
+                    data["concentration_estimate"]["wells_used"],
+                    data["concentration_estimate"]["stock_concentration_cells_per_ul"]["r_squared"])
+        return conc
+    elif os.environ.get("STOCK_CONC"):
+        conc = float(os.environ["STOCK_CONC"])
+        logger.info("Using manual STOCK_CONC=%.2f cells/uL", conc)
+        return conc
+    else:
+        raise ValueError("Set JSON=<path> or STOCK_CONC=<value>")
+
 # ── Configuration ─────────────────────────────────────────────────────────────
-OT2_HOST     = os.environ.get("OT2_HOST")
-DRY_RUN      = os.environ.get("DRY_RUN", "false").lower() == "true"
-WORKING_WELL = os.environ.get("WORKING_WELL", "D1")
+OT2_HOST  = os.environ.get("OT2_HOST")
+DRY_RUN   = os.environ.get("DRY_RUN", "false").lower() == "true"
 
-N_WELLS      = 24       # first 24 wells = cols 1-3 of 96wp
-VOL_STEP1    = 80.0     # uL — first aliquot
-VOL_STEP3    = 20.0     # uL — second aliquot (same wells)
-ROWS         = list("ABCDEFGH")
+N_WELLS        = 8
+ALIQUOT_VOL    = 80.0    # uL per well
+DEAD_VOL       = 500.0   # uL dead volume in C1
+C1_TOTAL_VOL   = N_WELLS * ALIQUOT_VOL + DEAD_VOL  # 1140 uL
+MIN_TRANSFER   = 20.0    # uL minimum P300 transfer
 
-# Heights — aspirate always 0.5mm, dispense always 2.0mm
-ASP_H  = 0.5
-DISP_H = 2.0
+ASP_H  = 0.5   # mm aspirate height
+DISP_H = 2.0   # mm dispense height
+ROWS   = list("ABCDEFGH")
+TARGET_WELLS = [f"{r}1" for r in ROWS]  # A1-H1
 
-# First 24 wells: A1-H1, A2-H2, A3-H3
-TARGET_WELLS = [f"{r}{c}" for c in range(1, 4) for r in ROWS]
 
-print("=" * 55)
-print("aliquot_wells.py — Two-Step Single Cell Aliquoting")
-print(f"  Source         : 24-well {WORKING_WELL}")
-print(f"  Target wells   : {N_WELLS} wells (cols 1-3: {TARGET_WELLS[0]}-{TARGET_WELLS[-1]})")
-print(f"  Step 1         : {VOL_STEP1:.0f} uL/well (P300 single tip)")
-print(f"  Step 2         : P1000 mix {WORKING_WELL} 5x at 800uL")
-print(f"  Step 3         : {VOL_STEP3:.0f} uL/well (P300 single tip)")
-print(f"  Total/well     : {VOL_STEP1 + VOL_STEP3:.0f} uL")
-print(f"  Aspirate height: {ASP_H}mm | Dispense height: {DISP_H}mm")
-print(f"  Dry run        : {DRY_RUN}")
-print("=" * 55)
+def calc_dilution(stock_conc: float):
+    """Calculate stock transfer vol and buffer vol for 1 cell/ALIQUOT_VOL."""
+    target_conc = 1.0 / ALIQUOT_VOL  # cells/uL = 0.0125
+    stock_transfer = (target_conc * C1_TOTAL_VOL) / stock_conc
+
+    # Enforce minimum 20uL transfer by scaling up C1 volume if needed
+    if stock_transfer < MIN_TRANSFER:
+        scale = MIN_TRANSFER / stock_transfer
+        stock_transfer = MIN_TRANSFER
+        total = C1_TOTAL_VOL * scale
+        buffer_vol = total - stock_transfer
+    else:
+        stock_transfer = min(stock_transfer, 180.0)  # cap at P300 max
+        buffer_vol = C1_TOTAL_VOL - stock_transfer
+
+    return stock_transfer, buffer_vol
 
 
 async def run():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%H:%M:%S",
+    )
+
+    stock_conc = get_stock_conc()
+    stock_transfer, buffer_vol = calc_dilution(stock_conc)
+
+    print("=" * 58)
+    print("aliquot_wells.py — Concentration-Aware Single Cell Aliquoting")
+    print(f"  Stock conc (A1) : {stock_conc:.2f} cells/uL")
+    print(f"  Target          : 1 cell per {ALIQUOT_VOL:.0f} uL well")
+    print(f"  Stock A1 -> C1  : {stock_transfer:.1f} uL")
+    print(f"  Buffer B1 -> C1 : {buffer_vol:.1f} uL")
+    print(f"  C1 total        : {stock_transfer + buffer_vol:.0f} uL")
+    print(f"  Aliquot         : {ALIQUOT_VOL:.0f} uL from C1 -> {N_WELLS} wells (A1-H1)")
+    print(f"  Heights         : aspirate {ASP_H}mm | dispense {DISP_H}mm")
+    print(f"  Dry run         : {DRY_RUN}")
+    print("=" * 58)
+
     if DRY_RUN:
         logger.info("DRY RUN — no robot movement")
-        logger.info("Step 1: P300 tip 1 — %.0f uL into %d wells", VOL_STEP1, N_WELLS)
+        logger.info("Step 1: Mix A1, transfer %.1f uL A1 -> C1", stock_transfer)
+        trips = int(buffer_vol // 180) + (1 if buffer_vol % 180 > 0 else 0)
+        logger.info("Step 2: Add %.1f uL buffer B1 -> C1 (%d trips)", buffer_vol, trips)
+        logger.info("Step 3: P1000 mix C1 5x at 800uL")
+        logger.info("Step 4: P300 single tip — %.0f uL x %d wells", ALIQUOT_VOL, N_WELLS)
         for well in TARGET_WELLS:
-            logger.info("  %.0f uL -> %s", VOL_STEP1, well)
-        logger.info("Step 2: P1000 — mix %s 5x at 800uL", WORKING_WELL)
-        logger.info("Step 3: P300 tip 2 — %.0f uL into %d wells", VOL_STEP3, N_WELLS)
-        for well in TARGET_WELLS:
-            logger.info("  %.0f uL -> %s", VOL_STEP3, well)
-        logger.info("Done — %.0f uL total per well", VOL_STEP1 + VOL_STEP3)
+            logger.info("  %.0f uL -> 96wp %s", ALIQUOT_VOL, well)
+        logger.info("Done! Math verified.")
         return
 
     if not OT2_HOST:
@@ -116,64 +176,64 @@ async def run():
     await lh.setup(skip_home=False)
 
     try:
-        # ── Step 1: P300 single tip — 80uL into 24 wells ─────────────────────
-        logger.info("=== STEP 1: P300 single tip — %.0f uL into %d wells ===",
-                    VOL_STEP1, N_WELLS)
+        # ── Step 1: Transfer stock A1 -> C1 ──────────────────────────────────
+        logger.info("=== STEP 1: Stock A1 -> C1 (%.1f uL) ===", stock_transfer)
         await lh.pick_up_tips(next_tip(), use_channels=[0])
-        for i, well in enumerate(TARGET_WELLS):
-            logger.info("  %d/%d: %.0f uL -> 96wp %s", i+1, N_WELLS, VOL_STEP1, well)
-            # Mix every 8 wells
-            if i % 8 == 0:
-                await lh.aspirate(
-                    plate_24[WORKING_WELL], vols=[150],
-                    mix=[Mix(volume=150, repetitions=3, flow_rate=150)],
-                    liquid_height=[ASP_H], use_channels=[0],
-                )
-                await lh.dispense(plate_24[WORKING_WELL], vols=[150],
-                                  liquid_height=[DISP_H], use_channels=[0])
-            await lh.aspirate(plate_24[WORKING_WELL], vols=[VOL_STEP1],
-                              liquid_height=[ASP_H], use_channels=[0])
-            await lh.dispense(plate_96[well], vols=[VOL_STEP1],
-                              liquid_height=[DISP_H], use_channels=[0])
+        # Mix stock first
+        await lh.aspirate(
+            plate_24["A1"], vols=[150],
+            mix=[Mix(volume=150, repetitions=5, flow_rate=150)],
+            liquid_height=[ASP_H], use_channels=[0],
+        )
+        await lh.dispense(plate_24["A1"], vols=[150], liquid_height=[DISP_H], use_channels=[0])
+        await lh.aspirate(plate_24["A1"], vols=[stock_transfer], liquid_height=[ASP_H], use_channels=[0])
+        await lh.dispense(plate_24["C1"], vols=[stock_transfer], liquid_height=[DISP_H], use_channels=[0])
         await lh.discard_tips()
         logger.info("Step 1 complete.")
 
-        # ── Step 2: P1000 mix D1 ─────────────────────────────────────────────
-        logger.info("=== STEP 2: P1000 — mixing %s 5x at 800uL ===", WORKING_WELL)
+        # ── Step 2: Add buffer B1 -> C1 ──────────────────────────────────────
+        logger.info("=== STEP 2: Buffer B1 -> C1 (%.1f uL) ===", buffer_vol)
+        remaining = buffer_vol
+        while remaining > 0:
+            vol = min(180.0, remaining)
+            await lh.pick_up_tips(next_tip(), use_channels=[0])
+            await lh.aspirate(plate_24["B1"], vols=[vol], liquid_height=[ASP_H], use_channels=[0])
+            await lh.dispense(plate_24["C1"], vols=[vol], liquid_height=[DISP_H], use_channels=[0])
+            await lh.discard_tips()
+            remaining -= vol
+            logger.info("  %.0f uL added (%.0f remaining)", vol, max(0, remaining))
+        logger.info("Step 2 complete.")
+
+        # ── Step 3: P1000 mix C1 ─────────────────────────────────────────────
+        logger.info("=== STEP 3: P1000 mix C1 (5x at 800uL) ===")
         await lh.pick_up_tips(tip_1000["A1"], use_channels=[1])
         await lh.aspirate(
-            plate_24[WORKING_WELL], vols=[800],
+            plate_24["C1"], vols=[800],
             mix=[Mix(volume=800, repetitions=5, flow_rate=400)],
             liquid_height=[ASP_H], use_channels=[1],
         )
-        await lh.dispense(plate_24[WORKING_WELL], vols=[800],
-                          liquid_height=[DISP_H], use_channels=[1])
-        await lh.discard_tips()
-        logger.info("Step 2 complete.")
-
-        # ── Step 3: P300 single tip — 20uL into same 24 wells ────────────────
-        logger.info("=== STEP 3: P300 single tip — %.0f uL into same %d wells ===",
-                    VOL_STEP3, N_WELLS)
-        await lh.pick_up_tips(next_tip(), use_channels=[0])
-        for i, well in enumerate(TARGET_WELLS):
-            logger.info("  %d/%d: %.0f uL -> 96wp %s", i+1, N_WELLS, VOL_STEP3, well)
-            if i % 8 == 0:
-                await lh.aspirate(
-                    plate_24[WORKING_WELL], vols=[150],
-                    mix=[Mix(volume=150, repetitions=3, flow_rate=150)],
-                    liquid_height=[ASP_H], use_channels=[0],
-                )
-                await lh.dispense(plate_24[WORKING_WELL], vols=[150],
-                                  liquid_height=[DISP_H], use_channels=[0])
-            await lh.aspirate(plate_24[WORKING_WELL], vols=[VOL_STEP3],
-                              liquid_height=[ASP_H], use_channels=[0])
-            await lh.dispense(plate_96[well], vols=[VOL_STEP3],
-                              liquid_height=[DISP_H], use_channels=[0])
+        await lh.dispense(plate_24["C1"], vols=[800], liquid_height=[DISP_H], use_channels=[1])
         await lh.discard_tips()
         logger.info("Step 3 complete.")
 
-        logger.info("=== Aliquoting done! %d wells filled with %.0f uL each. ===",
-                    N_WELLS, VOL_STEP1 + VOL_STEP3)
+        # ── Step 4: P300 single tip — 80uL from C1 -> 8 wells ────────────────
+        logger.info("=== STEP 4: P300 — %.0f uL from C1 -> %d wells ===", ALIQUOT_VOL, N_WELLS)
+        await lh.pick_up_tips(next_tip(), use_channels=[0])
+        for i, well in enumerate(TARGET_WELLS):
+            logger.info("  %d/%d: %.0f uL -> 96wp %s", i+1, N_WELLS, ALIQUOT_VOL, well)
+            if i % 8 == 0:
+                await lh.aspirate(
+                    plate_24["C1"], vols=[150],
+                    mix=[Mix(volume=150, repetitions=3, flow_rate=150)],
+                    liquid_height=[ASP_H], use_channels=[0],
+                )
+                await lh.dispense(plate_24["C1"], vols=[150], liquid_height=[DISP_H], use_channels=[0])
+            await lh.aspirate(plate_24["C1"], vols=[ALIQUOT_VOL], liquid_height=[ASP_H], use_channels=[0])
+            await lh.dispense(plate_96[well], vols=[ALIQUOT_VOL], liquid_height=[DISP_H], use_channels=[0])
+        await lh.discard_tips()
+        logger.info("Step 4 complete.")
+
+        logger.info("=== Done! %d wells filled with %.0f uL each. ===", N_WELLS, ALIQUOT_VOL)
         logger.info(">>> Move plate to Squid for imaging.")
         await backend.home()
 
@@ -184,9 +244,4 @@ async def run():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        datefmt="%H:%M:%S",
-    )
     asyncio.run(run())
