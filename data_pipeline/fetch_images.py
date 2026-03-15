@@ -220,7 +220,7 @@ def download_image(url, dest):
 
 
 def main():
-    images_dir = Path(__file__).parent / "monomer_images"
+    images_dir = Path(__file__).parent.parent / "monomer_images"
 
     print("Connecting to Monomer Cloud MCP...")
     client = MonomerMCPClient()

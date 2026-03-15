@@ -23,7 +23,7 @@ Example using Claude Code:
   (interactive prompt to select plates and download images)
 
   > python well_classifier/classify_wells.py monomer_images/<barcode> \\
-      --output results.json --annotate-dir annotated_output/
+      --output results.json --output-dir annotated_output/<barcode>
 """
 
 # This file serves as documentation. The actual download logic is

@@ -201,7 +201,7 @@ def main():
     )
     parser.add_argument("image_dir", type=Path, help="Directory of well images")
     parser.add_argument("--output-dir", type=Path, default=None,
-                        help="Output directory (default: annotated_output_<barcode>/)")
+                        help="Output directory (default: annotated_output/<barcode>/)")
     parser.add_argument("--annotate", action="store_true",
                         help="Save annotated images with color-coded beads")
     parser.add_argument("--debug", action="store_true",
@@ -223,7 +223,7 @@ def main():
 
     # Derive plate barcode from image directory name
     barcode = args.image_dir.name
-    output_dir = args.output_dir or Path(f"annotated_output_{barcode}")
+    output_dir = args.output_dir or Path("annotated_output") / barcode
     output_dir.mkdir(parents=True, exist_ok=True)
 
     classify_kwargs = {

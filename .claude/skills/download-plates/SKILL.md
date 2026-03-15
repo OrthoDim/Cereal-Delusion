@@ -81,7 +81,7 @@ Ask the user: **"What type of analysis do you want to run?"**
 ### Option 1: Single-cell detection
 
 ```bash
-python -m well_classifier.classify_single_cells monomer_images/<barcode> --output-dir annotated_output_<barcode> --annotate
+python -m well_classifier.classify_single_cells monomer_images/<barcode> --output-dir annotated_output/<barcode> --annotate
 ```
 
 Outputs `single_cell_results_<barcode>.json` and `detailed_results_<barcode>.json` into the output directory.
@@ -97,7 +97,7 @@ If the user provides a JSON file path, use it directly:
 ```bash
 python -m well_classifier.measure_concentration monomer_images/<barcode> \
     --dilution-config <path_to_config.json> \
-    --output-dir annotated_output_<barcode> --annotate
+    --output-dir annotated_output/<barcode> --annotate
 ```
 
 If the user describes their setup (e.g., "1:2 serial dilution, A1 through H1, 100uL per well"), use the `--wells` shorthand or create a config JSON (it will be automatically saved into the output directory). Format:
@@ -118,7 +118,7 @@ Then run:
 ```bash
 python -m well_classifier.measure_concentration monomer_images/<barcode> \
     --dilution-config well_classifier/templates/dilution_series_input_<barcode>.json \
-    --output-dir annotated_output_<barcode> --annotate
+    --output-dir annotated_output/<barcode> --annotate
 ```
 
 Outputs `concentration_results_<barcode>.json` and `detailed_results_<barcode>.json` into the output directory.

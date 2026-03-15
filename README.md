@@ -51,13 +51,13 @@ elnora auth login
 ### 7. Connect to Monomer Cloud MCP
 
 ```bash
-claude mcp add --scope user --transport http monomer-cloud https://backend-staging.monomerbio.com/mcp
+claude mcp add --transport http monomer-cloud https://backend-staging.monomerbio.com/mcp
 ```
 
 ### 8. Fetch observation images
 
 ```bash
-python fetch_images.py
+python data_pipeline/fetch_images.py
 ```
 
 Requires Monomer Cloud MCP authentication (step 7). Downloads all Cereal Delusion plate images to `monomer_images/`.

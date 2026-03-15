@@ -10,7 +10,7 @@ Classifies each well as `empty`, `single`, `multiple`, `multiple_clusters`, or `
 
 ```bash
 python -m well_classifier.classify_single_cells monomer_images/<barcode> \
-    --output-dir annotated_output_<barcode> \
+    --output-dir annotated_output/<barcode> \
     --annotate
 ```
 
@@ -26,7 +26,7 @@ Counts beads across a dilution series and estimates stock concentration. Use thi
 ```bash
 python -m well_classifier.measure_concentration monomer_images/<barcode> \
     --dilution-config well_classifier/templates/dilution_series_input.json \
-    --output-dir annotated_output_<barcode> \
+    --output-dir annotated_output/<barcode> \
     --annotate
 ```
 

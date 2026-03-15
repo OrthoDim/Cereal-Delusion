@@ -312,7 +312,7 @@ def main():
     parser.add_argument("--volume", type=float, default=200,
                         help="Volume per well in uL (default: 200)")
     parser.add_argument("--output-dir", type=Path, default=None,
-                        help="Output directory (default: annotated_output_<barcode>/)")
+                        help="Output directory (default: annotated_output/<barcode>/)")
     parser.add_argument("--annotate", action="store_true",
                         help="Save annotated images")
     parser.add_argument("--max-cluster-ratio", type=float, default=0.2,
@@ -347,7 +347,7 @@ def main():
 
     plate_id = config.get("plate_id", args.image_dir.name)
     barcode = plate_id
-    output_dir = args.output_dir or Path(f"annotated_output_{barcode}")
+    output_dir = args.output_dir or Path("annotated_output") / barcode
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Save dilution config into output directory
