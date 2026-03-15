@@ -77,6 +77,7 @@ N_WELLS        = 8
 ALIQUOT_VOL    = 80.0    # uL per well
 DEAD_VOL       = 500.0   # uL dead volume in C1
 C1_TOTAL_VOL   = N_WELLS * ALIQUOT_VOL + DEAD_VOL  # 1140 uL
+DEMO_MODE      = True    # use 1mL P1000 buffer trip for demo
 MIN_TRANSFER   = 20.0    # uL minimum P300 transfer
 
 ASP_H  = 0.5   # mm aspirate height
@@ -128,8 +129,7 @@ async def run():
     if DRY_RUN:
         logger.info("DRY RUN — no robot movement")
         logger.info("Step 1: Mix A1, transfer %.1f uL A1 -> C1", stock_transfer)
-        trips = int(buffer_vol // 180) + (1 if buffer_vol % 180 > 0 else 0)
-        logger.info("Step 2: Add %.1f uL buffer B1 -> C1 (%d trips)", buffer_vol, trips)
+        logger.info("Step 2: P1000 — 1000 uL buffer B1 -> C1 (1 trip, demo mode)")
         logger.info("Step 3: P1000 mix C1 5x at 800uL")
         logger.info("Step 4: P300 single tip — %.0f uL x %d wells", ALIQUOT_VOL, N_WELLS)
         for well in TARGET_WELLS:
@@ -176,8 +176,16 @@ async def run():
     await lh.setup(skip_home=False)
 
     try:
-        # ── Step 1: Transfer stock A1 -> C1 ──────────────────────────────────
-        logger.info("=== STEP 1: Stock A1 -> C1 (%.1f uL) ===", stock_transfer)
+        # ── Step 1: Add 1mL buffer B1 -> C1 via P1000 ───────────────────────────
+        logger.info("=== STEP 1: P1000 — 1000 uL buffer B1 -> C1 ===")
+        await lh.pick_up_tips(tip_1000["A1"], use_channels=[1])
+        await lh.aspirate(plate_24["B1"], vols=[1000], liquid_height=[ASP_H], use_channels=[1])
+        await lh.dispense(plate_24["C1"], vols=[1000], liquid_height=[DISP_H], use_channels=[1])
+        await lh.discard_tips()
+        logger.info("Step 1 complete.")
+
+        # ── Step 2: Transfer stock A1 -> C1 ──────────────────────────────────
+        logger.info("=== STEP 2: Stock A1 -> C1 (%.1f uL) ===", stock_transfer)
         await lh.pick_up_tips(next_tip(), use_channels=[0])
         # Mix stock first
         await lh.aspirate(
@@ -189,24 +197,11 @@ async def run():
         await lh.aspirate(plate_24["A1"], vols=[stock_transfer], liquid_height=[ASP_H], use_channels=[0])
         await lh.dispense(plate_24["C1"], vols=[stock_transfer], liquid_height=[DISP_H], use_channels=[0])
         await lh.discard_tips()
-        logger.info("Step 1 complete.")
-
-        # ── Step 2: Add buffer B1 -> C1 ──────────────────────────────────────
-        logger.info("=== STEP 2: Buffer B1 -> C1 (%.1f uL) ===", buffer_vol)
-        remaining = buffer_vol
-        while remaining > 0:
-            vol = min(180.0, remaining)
-            await lh.pick_up_tips(next_tip(), use_channels=[0])
-            await lh.aspirate(plate_24["B1"], vols=[vol], liquid_height=[ASP_H], use_channels=[0])
-            await lh.dispense(plate_24["C1"], vols=[vol], liquid_height=[DISP_H], use_channels=[0])
-            await lh.discard_tips()
-            remaining -= vol
-            logger.info("  %.0f uL added (%.0f remaining)", vol, max(0, remaining))
         logger.info("Step 2 complete.")
 
         # ── Step 3: P1000 mix C1 ─────────────────────────────────────────────
         logger.info("=== STEP 3: P1000 mix C1 (5x at 800uL) ===")
-        await lh.pick_up_tips(tip_1000["A1"], use_channels=[1])
+        await lh.pick_up_tips(tip_1000["A2"], use_channels=[1])
         await lh.aspirate(
             plate_24["C1"], vols=[800],
             mix=[Mix(volume=800, repetitions=5, flow_rate=400)],
