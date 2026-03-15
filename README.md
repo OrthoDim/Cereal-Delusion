@@ -34,14 +34,20 @@ conda env create -f environment.yml
 conda activate clonebot-env
 ```
 
-Key packages: PyLabRobot (lab automation), Elnora CLI (bioprotocol platform), Flask, NumPy, SQLAlchemy, and hardware drivers (pyserial, pyusb, pymodbus, opentrons). See `environment.yml` for the full list.
+Key packages: PyLabRobot (lab automation), Flask, NumPy, SQLAlchemy, and hardware drivers (pyserial, pyusb, pymodbus, opentrons). See `environment.yml` for the full list.
 
-### 5. Authenticate with Elnora
+### 5. Install the Elnora CLI
+
+```bash
+pip install -e ./elnora-cli
+```
+
+### 6. Authenticate with Elnora
 
 ```bash
 elnora auth login
 ```
 
-### 6. Claude Code
+### 7. Claude Code
 
 The Elnora CLI is configured as a Claude Code plugin via `.claude/settings.json`. Once the reference repos are cloned, Claude Code will automatically load the Elnora skills and can reference PyLabRobot conventions.
