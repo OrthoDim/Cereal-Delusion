@@ -93,15 +93,32 @@ DRY_RUN=true JSON=annotated_output_*/concentration_results_*.json python aliquot
 
 ---
 
-## Phase 4: Iterate — Fill Empty Wells (~3 min)
+## Phase 4: Iterate — Re-seed Empty Wells (~3 min)
 
 **Goal:** Re-seed empty wells to maximize single-cell occupancy.
 
-| Step | Action |
-|------|--------|
-| 19 | AI identifies all `empty` wells |
-| 20 | OT-2 aspirates 100 µL from 24-well B1, dispenses into each empty well |
-| 21 | Discard tips |
+| Step | Action | Notes |
+|------|--------|-------|
+| 19 | Read classifier JSON → identify all `empty` wells | e.g. 24 of 96 empty |
+| 20 | **P1000**: pick up tip, mix C1 5× at 800µL, discard | Break up clumps before reseeding |
+| 21 | **P300 single tip**: pick up ONE tip for all empty wells | — |
+| 22 | Mix C1 3× every 8 wells | Beads settle fast! |
+| 23 | Aspirate 80µL from C1 → dispense into each empty well | Same tip throughout |
+| 24 | Discard tip at end | — |
+
+```bash
+# ALWAYS dry run first to verify:
+DRY_RUN=true JSON=96_well_plate_cell_counts.json python reseed_empty_wells.py
+
+# Demo (8 empty wells — hackathon POC):
+MAX_WELLS=8 JSON=96_well_plate_cell_counts.json OT2_HOST=192.168.68.101 python reseed_empty_wells.py
+
+# Demo v2 (24 empty wells — fuller demo):
+MAX_WELLS=24 JSON=96_well_plate_cell_counts.json OT2_HOST=192.168.68.101 python reseed_empty_wells.py
+
+# Production (all empty wells — full 96wp):
+JSON=96_well_plate_cell_counts.json OT2_HOST=192.168.68.101 python reseed_empty_wells.py
+```
 
 🔬 **Re-image. Repeat until >60% single-cell occupancy or time budget reached.**
 
