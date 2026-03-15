@@ -32,7 +32,6 @@ Thumbs.db
 
 # Images (fetched from Monomer Cloud)
 images/
-monomer_images/
 
 # Environment
 .env

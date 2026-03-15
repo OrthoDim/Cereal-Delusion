@@ -1,0 +1,47 @@
+{
+  "_comment": "Input template for measure_concentration. dilution_factor is cumulative (relative to stock).",
+  "plate_id": "CerealDelusion_Run3A",
+  "stock_label": "bead stock",
+  "dilution_series": [
+    {
+      "well_id": "A1",
+      "dilution_factor": 1,
+      "volume_ul": 100
+    },
+    {
+      "well_id": "B1",
+      "dilution_factor": 2,
+      "volume_ul": 100
+    },
+    {
+      "well_id": "C1",
+      "dilution_factor": 4,
+      "volume_ul": 100
+    },
+    {
+      "well_id": "D1",
+      "dilution_factor": 8,
+      "volume_ul": 100
+    },
+    {
+      "well_id": "E1",
+      "dilution_factor": 16,
+      "volume_ul": 100
+    },
+    {
+      "well_id": "F1",
+      "dilution_factor": 32,
+      "volume_ul": 100
+    },
+    {
+      "well_id": "G1",
+      "dilution_factor": 64,
+      "volume_ul": 100
+    },
+    {
+      "well_id": "H1",
+      "dilution_factor": 128,
+      "volume_ul": 100
+    }
+  ]
+}
