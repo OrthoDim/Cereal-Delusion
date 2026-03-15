@@ -48,6 +48,20 @@ pip install -e ./elnora-cli
 elnora auth login
 ```
 
-### 7. Claude Code
+### 7. Connect to Monomer Cloud MCP
+
+```bash
+claude mcp add --scope user --transport http monomer-cloud https://backend-staging.monomerbio.com/mcp
+```
+
+### 8. Fetch observation images
+
+```bash
+python fetch_images.py
+```
+
+Requires Monomer Cloud MCP authentication (step 7). Downloads all Cereal Delusion plate images to `images/`.
+
+### 9. Claude Code
 
 The Elnora CLI is configured as a Claude Code plugin via `.claude/settings.json`. Once the reference repos are cloned, Claude Code will automatically load the Elnora skills and can reference PyLabRobot conventions.

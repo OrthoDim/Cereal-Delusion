@@ -30,6 +30,9 @@ Thumbs.db
 # Claude Code
 .claude/skills/
 
+# Images (fetched from Monomer Cloud)
+images/
+
 # Environment
 .env
 .env.local

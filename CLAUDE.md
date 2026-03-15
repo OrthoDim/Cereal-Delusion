@@ -16,6 +16,10 @@ Two reference repositories are cloned locally (gitignored) for context:
 - Library source in `pylabrobot/pylabrobot/`
 - When writing code that interfaces with lab hardware, follow PyLabRobot conventions and API patterns
 
+## Image Fetching
+
+- `python fetch_images.py` — fetches all Cereal Delusion plate images from Monomer Cloud MCP into `images/` (requires MCP auth via `~/.claude/.credentials.json`)
+
 ## Conventions
 
 - Follow PyLabRobot API patterns when writing lab automation code
