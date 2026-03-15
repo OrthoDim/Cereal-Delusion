@@ -60,7 +60,7 @@ claude mcp add --scope user --transport http monomer-cloud https://backend-stagi
 python fetch_images.py
 ```
 
-Requires Monomer Cloud MCP authentication (step 7). Downloads all Cereal Delusion plate images to `images/`.
+Requires Monomer Cloud MCP authentication (step 7). Downloads all Cereal Delusion plate images to `monomer_images/`.
 
 ### 9. Claude Code
 

@@ -172,16 +172,8 @@ def download_image(url, dest):
         dest.write_bytes(resp.read())
 
 
-def folder_name_from_barcode(barcode):
-    """Strip the 'Cereal_Delusion_' prefix to get the folder name."""
-    prefix = "Cereal_Delusion_"
-    if barcode.startswith(prefix):
-        return barcode[len(prefix):]
-    return barcode
-
-
 def main():
-    images_dir = Path(__file__).parent / "images"
+    images_dir = Path(__file__).parent / "monomer_images"
 
     print("Connecting to Monomer Cloud MCP...")
     client = MonomerMCPClient()
@@ -202,8 +194,7 @@ def main():
     for plate in plates:
         plate_id = plate["id"]
         barcode = plate["barcode"]
-        folder = folder_name_from_barcode(barcode)
-        plate_dir = images_dir / folder
+        plate_dir = images_dir / barcode
         plate_dir.mkdir(parents=True, exist_ok=True)
 
         print(f"\nPlate: {barcode}")
@@ -233,7 +224,7 @@ def main():
         for culture in cultures:
             culture_id = culture["id"]
             well = culture["well"]
-            filename = f"{barcode}_{well}.jpg"
+            filename = f"{well}.jpg"
             dest = plate_dir / filename
 
             if dest.exists():

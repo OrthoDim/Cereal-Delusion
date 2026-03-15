@@ -18,7 +18,7 @@ Two reference repositories are cloned locally (gitignored) for context:
 
 ## Image Fetching
 
-- `python fetch_images.py` — fetches all Cereal Delusion plate images from Monomer Cloud MCP into `images/` (requires MCP auth via `~/.claude/.credentials.json`)
+- `python fetch_images.py` — fetches all Cereal Delusion plate images from Monomer Cloud MCP into `monomer_images/` (requires MCP auth via `~/.claude/.credentials.json`)
 
 ## Conventions
 
