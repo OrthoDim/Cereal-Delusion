@@ -4,6 +4,7 @@
 import json
 import os
 import platform
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -15,35 +16,75 @@ TOKEN_URL = "https://backend-staging.monomerbio.com/token"
 PLATE_PREFIX = "Cereal"
 
 
-def find_credentials_path():
-    """Find .claude/.credentials.json across platforms."""
-    candidates = []
+def _read_keychain_credentials():
+    """Read Claude Code credentials from macOS Keychain. Returns dict or None."""
+    try:
+        result = subprocess.run(
+            ["security", "find-generic-password", "-s", "Claude Code-credentials",
+             "-a", os.environ.get("USER", ""), "-w"],
+            capture_output=True, text=True, check=True,
+        )
+        return json.loads(result.stdout.strip())
+    except (subprocess.CalledProcessError, json.JSONDecodeError):
+        return None
 
-    # Standard: ~/.claude/.credentials.json
+
+def _write_keychain_credentials(creds):
+    """Write Claude Code credentials back to macOS Keychain."""
+    creds_json = json.dumps(creds)
+    user = os.environ.get("USER", "")
+    # Delete existing entry then re-add (security doesn't support in-place update)
+    subprocess.run(
+        ["security", "delete-generic-password", "-s", "Claude Code-credentials", "-a", user],
+        capture_output=True,
+    )
+    subprocess.run(
+        ["security", "add-generic-password", "-s", "Claude Code-credentials",
+         "-a", user, "-w", creds_json],
+        capture_output=True, check=True,
+    )
+
+
+def find_credentials():
+    """Find Claude Code credentials across platforms.
+
+    Returns (creds_dict, file_path_or_None). On macOS, credentials are stored
+    in the Keychain so file_path is None. On Windows/Linux, returns the path
+    to .credentials.json for write-back on token refresh.
+    """
+    # macOS: try Keychain first
+    if platform.system() == "Darwin":
+        creds = _read_keychain_credentials()
+        if creds:
+            print("Loaded credentials from macOS Keychain.")
+            return creds, None
+
+    # Windows/Linux: file-based lookup
+    candidates = []
     candidates.append(Path.home() / ".claude" / ".credentials.json")
 
-    # Windows: %APPDATA%/claude/.credentials.json
     appdata = os.environ.get("APPDATA")
     if appdata:
         candidates.append(Path(appdata) / "claude" / ".credentials.json")
 
-    # Windows: %LOCALAPPDATA%/claude/.credentials.json
     localappdata = os.environ.get("LOCALAPPDATA")
     if localappdata:
         candidates.append(Path(localappdata) / "claude" / ".credentials.json")
 
-    # Windows: %USERPROFILE%/.claude/.credentials.json
     userprofile = os.environ.get("USERPROFILE")
     if userprofile:
         candidates.append(Path(userprofile) / ".claude" / ".credentials.json")
 
     for path in candidates:
         if path.exists():
-            return path
+            print(f"Loaded credentials from {path}")
+            return json.loads(path.read_text()), path
 
-    print("Could not find Claude credentials file. Searched:")
-    for p in candidates:
-        print(f"  {p}")
+    searched = ["macOS Keychain (Claude Code-credentials)"] if platform.system() == "Darwin" else []
+    searched.extend(str(p) for p in candidates)
+    print("Could not find Claude Code credentials. Searched:")
+    for s in searched:
+        print(f"  {s}")
     print("\nMake sure you have authenticated with Monomer Cloud via Claude Code:")
     print("  claude mcp add --scope user --transport http monomer-cloud https://backend-staging.monomerbio.com/mcp")
     sys.exit(1)
@@ -62,8 +103,7 @@ def find_mcp_key(creds):
 
 class MonomerMCPClient:
     def __init__(self):
-        self.credentials_path = find_credentials_path()
-        self.creds = json.loads(self.credentials_path.read_text())
+        self.creds, self.credentials_path = find_credentials()
         self.mcp_key = find_mcp_key(self.creds)
         self.session_id = None
         self._request_id = 0
@@ -71,6 +111,13 @@ class MonomerMCPClient:
 
     def _get_oauth(self):
         return self.creds["mcpOAuth"][self.mcp_key]
+
+    def _save_credentials(self):
+        """Write credentials back to the appropriate store."""
+        if self.credentials_path:
+            self.credentials_path.write_text(json.dumps(self.creds))
+        elif platform.system() == "Darwin":
+            _write_keychain_credentials(self.creds)
 
     def _refresh_access_token(self):
         oauth = self._get_oauth()
@@ -87,7 +134,7 @@ class MonomerMCPClient:
         oauth["expiresAt"] = int(time.time() * 1000) + token_data.get("expires_in", 86400) * 1000
         if "refresh_token" in token_data:
             oauth["refreshToken"] = token_data["refresh_token"]
-        self.credentials_path.write_text(json.dumps(self.creds))
+        self._save_credentials()
         print("Refreshed access token.")
 
     def _get_access_token(self):
