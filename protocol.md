@@ -7,7 +7,7 @@
 
 | Slot | Labware | Contents |
 |------|---------|----------|
-| 1 | 24-well deepwell (10 mL) | **A1** = bead/cell stock, **B1** = working dilution (made in Phase 2) |
+| 1 | 24-well deepwell (10 mL) | **A1** = bead/cell stock, **B1** = buffer (Phase 1), **C1** = buffer (Phase 2), **D1** = working dilution (built in Phase 2) |
 | 2 | *(unused)* | — |
 | 3 | 96-well flat bottom (360 µL) | **Col 1 (A1–H1)** = serial dilution for imaging, **Cols 2–12** = seeded wells |
 | 6 | 200 µL filter tip rack | P300, left mount, channel 0 — serial dilution + seeding |
@@ -21,31 +21,55 @@
 
 | Step | Action | Volume | From → To | Notes |
 |------|--------|--------|-----------|-------|
-| 1 | Add buffer to wells A1–H1 | 180 µL each | 24-well B1 → 96wp col 1 | **P1000 single tip, repeat dispense** — one tip for all 8 wells |
-| 2 | Add stock → A1, mix 5× | 20 µL | 24-well A1 → 96wp A1 | **P300 single tip picked up here** — 1:10 |
-| 3 | Transfer A1 → B1, mix 5× | 20 µL | 96wp A1 → B1 | same tip, 1:100 |
-| 4 | Transfer B1 → C1, mix 5× | 20 µL | 96wp B1 → C1 | same tip, 1:1,000 |
-| 5 | Transfer C1 → D1, mix 5× | 20 µL | 96wp C1 → D1 | same tip, 1:10,000 |
-| 6 | Transfer D1 → E1, mix 5× | 20 µL | 96wp D1 → E1 | same tip, 1:100,000 |
-| 7 | Transfer E1 → F1, mix 5× | 20 µL | 96wp E1 → F1 | same tip, 1:1,000,000 |
-| 8 | Transfer F1 → G1, mix 5× | 20 µL | 96wp F1 → G1 | same tip, 1:10,000,000 |
-| 9 | Transfer G1 → H1, mix 5× | 20 µL | 96wp G1 → H1 | same tip, 1:100,000,000 |
+| 1 | Add buffer to wells A1–H1 | 100 µL each | 24-well B1 → 96wp col 1 | **P1000 single tip, repeat dispense** — one tip for all 8 wells |
+| 2 | Add stock → A1, mix 5× | 100 µL | 24-well A1 → 96wp A1 | **P300 single tip** — well A1 = **1:2** (50% stock) |
+| 3 | Transfer A1 → B1, mix 5× | 100 µL | 96wp A1 → B1 | well B1 = **1:4** (25% stock) |
+| 4 | Transfer B1 → C1, mix 5× | 100 µL | 96wp B1 → C1 | well C1 = **1:8** (12.5% stock) |
+| 5 | Transfer C1 → D1, mix 5× | 100 µL | 96wp C1 → D1 | well D1 = **1:16** (6.25% stock) |
+| 6 | Transfer D1 → E1, mix 5× | 100 µL | 96wp D1 → E1 | well E1 = **1:32** (3.1% stock) |
+| 7 | Transfer E1 → F1, mix 5× | 100 µL | 96wp E1 → F1 | well F1 = **1:64** (1.6% stock) |
+| 8 | Transfer F1 → G1, mix 5× | 100 µL | 96wp F1 → G1 | well G1 = **1:128** (0.8% stock) |
+| 9 | Transfer G1 → H1, mix 5× | 100 µL | 96wp G1 → H1 | well H1 = **1:256** (0.4% stock) |
 | 10 | Discard tip | — | — | **Single tip used for all 8 serial steps** |
 
 🔬 **Hand flat bottom plate to Squid. Image column 1 (A1–H1). AI estimates bead count per well. Identify which well has ~1 bead.**
 
 ---
 
-## Phase 2: Make Working Dilution in 24-well B1 (~2 min)
+## Phase 2: Make Working Dilution in 24-well D1 (~2 min)
 
-**Goal:** Recreate the identified concentration at scale in 24-well deepwell B1 — enough to seed 88 wells.
+**Goal:** Recreate the identified concentration at scale in 24-well deepwell D1.
 
 | Step | Action | Notes |
 |------|--------|-------|
-| 11 | Calculate required dilution from imaging result | e.g. well D1 = 1:10,000 → use that ratio |
-| 12 | Add buffer to 24-well B1 (multiple 180 µL trips) | ~9 mL total for 88 wells + dead vol |
-| 13 | Transfer from chosen 96wp col 1 well → 24-well B1, mix 10× | 20 µL from imaging well |
+| 11 | Identify which col 1 well had ~1 bead from imaging | e.g. 96wp D1 = 1:16 |
+| 12 | Add buffer to 24-well D1 via OT-2 (180 µL trips from C1) | ~2.5–5 mL total |
+| 13 | Transfer 20 µL from chosen 96wp well → 24-well D1, mix 10× | — |
 | 14 | Discard tips | — |
+
+---
+
+## Phase 2.5: Aliquot into Target Wells (~3 min)
+
+**Goal:** Dispense working dilution into target wells for single-cell isolation (e.g. 24 wells).
+
+| Step | Action | Volume | Notes |
+|------|--------|--------|-------|
+| 15 | Pick up fresh P300 tip per well | — | One tip per well |
+| 16 | Mix 24-well D1 × 3 every 8 wells | 150 µL | Beads settle fast! |
+| 17 | Aspirate from 24-well D1 | 100 µL or 50 µL | Set via `ALIQUOT_VOL` env var |
+| 18 | Dispense into target well | 100 µL or 50 µL | First 24 wells = A1→H3 |
+| 19 | Discard tip | — | Fresh tip every well |
+
+```bash
+# 100 µL into 24 wells (default):
+OT2_HOST=192.168.68.101 python aliquot_wells.py
+
+# 50 µL into 24 wells:
+ALIQUOT_VOL=50 N_WELLS=24 OT2_HOST=192.168.68.101 python aliquot_wells.py
+```
+
+🔬 **Hand plate to Squid. Image all target wells. AI classifies: empty / single / multiple / uncertain.**
 
 ---
 
