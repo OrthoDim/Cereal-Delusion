@@ -1,0 +1,554 @@
+{
+  "summary": {
+    "total_wells": 7,
+    "empty_wells": 1,
+    "single_wells": 0,
+    "multiple_wells": 6,
+    "multiple_clusters_wells": 0,
+    "uncertain_wells": 0,
+    "single_pct": 0.0,
+    "empty_pct": 14.3,
+    "estimated_lambda": 1.946
+  },
+  "wells": [
+    {
+      "well_id": "A2",
+      "label": "multiple",
+      "confidence": 0.9,
+      "bead_count": 8,
+      "cluster_count": 0,
+      "bead_areas": [
+        366.0,
+        347.0,
+        289.0,
+        283.0,
+        237.0,
+        212.0,
+        143.0,
+        48.0
+      ],
+      "reason": "8 bead(s)",
+      "beads": [
+        {
+          "area": 366.0,
+          "centroid": [
+            1368,
+            1963
+          ],
+          "bbox": [
+            1953,
+            1359,
+            1974,
+            1380
+          ],
+          "circularity": 0.9863921145483443,
+          "eccentricity": 0.2198756634344146,
+          "solidity": 0.9708222811671088,
+          "mean_intensity": 81.5846994535519
+        },
+        {
+          "area": 347.0,
+          "centroid": [
+            792,
+            1067
+          ],
+          "bbox": [
+            1058,
+            783,
+            1079,
+            804
+          ],
+          "circularity": 1.0028284073360394,
+          "eccentricity": 0.00809932387236063,
+          "solidity": 0.9774647887323944,
+          "mean_intensity": 79.34005763688761
+        },
+        {
+          "area": 289.0,
+          "centroid": [
+            913,
+            1692
+          ],
+          "bbox": [
+            1684,
+            905,
+            1703,
+            924
+          ],
+          "circularity": 0.9801674590999064,
+          "eccentricity": 0.29532674571539363,
+          "solidity": 0.9633333333333334,
+          "mean_intensity": 85.41176470588235
+        },
+        {
+          "area": 283.0,
+          "centroid": [
+            1473,
+            1962
+          ],
+          "bbox": [
+            1953,
+            1464,
+            1972,
+            1483
+          ],
+          "circularity": 0.9978601573337353,
+          "eccentricity": 0.29019661793610274,
+          "solidity": 0.9691780821917808,
+          "mean_intensity": 35.64664310954063
+        },
+        {
+          "area": 237.0,
+          "centroid": [
+            964,
+            801
+          ],
+          "bbox": [
+            793,
+            956,
+            811,
+            973
+          ],
+          "circularity": 1.0106718887301351,
+          "eccentricity": 0.24788952967794153,
+          "solidity": 0.9713114754098361,
+          "mean_intensity": 68.35864978902954
+        },
+        {
+          "area": 212.0,
+          "centroid": [
+            1327,
+            1236
+          ],
+          "bbox": [
+            1228,
+            1320,
+            1245,
+            1336
+          ],
+          "circularity": 1.0061814600558847,
+          "eccentricity": 0.24357196224559266,
+          "solidity": 0.9636363636363636,
+          "mean_intensity": 60.905660377358494
+        },
+        {
+          "area": 143.0,
+          "centroid": [
+            1611,
+            1131
+          ],
+          "bbox": [
+            1125,
+            1605,
+            1139,
+            1618
+          ],
+          "circularity": 1.0285237586918965,
+          "eccentricity": 0.4627241950953954,
+          "solidity": 0.9662162162162162,
+          "mean_intensity": 48.29370629370629
+        },
+        {
+          "area": 48.0,
+          "centroid": [
+            966,
+            1191
+          ],
+          "bbox": [
+            1188,
+            963,
+            1197,
+            970
+          ],
+          "circularity": 1.1097582375130812,
+          "eccentricity": 0.5537814082009771,
+          "solidity": 0.9411764705882353,
+          "mean_intensity": 34.645833333333336
+        }
+      ],
+      "clusters": []
+    },
+    {
+      "well_id": "B2",
+      "label": "multiple",
+      "confidence": 0.9,
+      "bead_count": 5,
+      "cluster_count": 0,
+      "bead_areas": [
+        291.0,
+        240.0,
+        230.0,
+        162.0,
+        108.0
+      ],
+      "reason": "5 bead(s)",
+      "beads": [
+        {
+          "area": 291.0,
+          "centroid": [
+            2259,
+            1914
+          ],
+          "bbox": [
+            1906,
+            2250,
+            1924,
+            2270
+          ],
+          "circularity": 0.9869506249068264,
+          "eccentricity": 0.30186405210831974,
+          "solidity": 0.97,
+          "mean_intensity": 123.9553264604811
+        },
+        {
+          "area": 240.0,
+          "centroid": [
+            1713,
+            1646
+          ],
+          "bbox": [
+            1638,
+            1705,
+            1655,
+            1723
+          ],
+          "circularity": 1.0017290586622927,
+          "eccentricity": 0.3061374859695301,
+          "solidity": 0.97165991902834,
+          "mean_intensity": 145.325
+        },
+        {
+          "area": 230.0,
+          "centroid": [
+            2055,
+            1881
+          ],
+          "bbox": [
+            1873,
+            2048,
+            1891,
+            2065
+          ],
+          "circularity": 0.9808208202866291,
+          "eccentricity": 0.3027850758427575,
+          "solidity": 0.9543568464730291,
+          "mean_intensity": 139.23043478260868
+        },
+        {
+          "area": 162.0,
+          "centroid": [
+            1304,
+            1176
+          ],
+          "bbox": [
+            1170,
+            1298,
+            1185,
+            1313
+          ],
+          "circularity": 0.9852476878946993,
+          "eccentricity": 0.18955149376062205,
+          "solidity": 0.9473684210526315,
+          "mean_intensity": 97.17901234567901
+        },
+        {
+          "area": 108.0,
+          "centroid": [
+            1373,
+            1864
+          ],
+          "bbox": [
+            1859,
+            1368,
+            1871,
+            1380
+          ],
+          "circularity": 1.0589905252970795,
+          "eccentricity": 0.437572069057282,
+          "solidity": 0.972972972972973,
+          "mean_intensity": 73.00925925925925
+        }
+      ],
+      "clusters": []
+    },
+    {
+      "well_id": "C2",
+      "label": "multiple",
+      "confidence": 0.9,
+      "bead_count": 4,
+      "cluster_count": 0,
+      "bead_areas": [
+        297.0,
+        285.0,
+        206.0,
+        170.0
+      ],
+      "reason": "4 bead(s)",
+      "beads": [
+        {
+          "area": 297.0,
+          "centroid": [
+            1846,
+            1775
+          ],
+          "bbox": [
+            1766,
+            1837,
+            1786,
+            1856
+          ],
+          "circularity": 0.9993172711046939,
+          "eccentricity": 0.3398344041737237,
+          "solidity": 0.9769736842105263,
+          "mean_intensity": 159.63636363636363
+        },
+        {
+          "area": 285.0,
+          "centroid": [
+            866,
+            2230
+          ],
+          "bbox": [
+            2221,
+            858,
+            2240,
+            877
+          ],
+          "circularity": 0.9854774555122855,
+          "eccentricity": 0.30311843813045586,
+          "solidity": 0.9661016949152542,
+          "mean_intensity": 163.459649122807
+        },
+        {
+          "area": 206.0,
+          "centroid": [
+            1914,
+            861
+          ],
+          "bbox": [
+            854,
+            1907,
+            870,
+            1923
+          ],
+          "circularity": 1.0337468036395758,
+          "eccentricity": 0.26404407092782145,
+          "solidity": 0.9809523809523809,
+          "mean_intensity": 110.27184466019418
+        },
+        {
+          "area": 170.0,
+          "centroid": [
+            2535,
+            1416
+          ],
+          "bbox": [
+            1409,
+            2529,
+            1424,
+            2543
+          ],
+          "circularity": 1.0450287247537686,
+          "eccentricity": 0.37539439873287517,
+          "solidity": 0.9770114942528736,
+          "mean_intensity": 98.39411764705882
+        }
+      ],
+      "clusters": []
+    },
+    {
+      "well_id": "D2",
+      "label": "multiple",
+      "confidence": 0.9,
+      "bead_count": 3,
+      "cluster_count": 0,
+      "bead_areas": [
+        464.0,
+        278.0,
+        236.0
+      ],
+      "reason": "3 bead(s)",
+      "beads": [
+        {
+          "area": 464.0,
+          "centroid": [
+            1088,
+            722
+          ],
+          "bbox": [
+            710,
+            1077,
+            735,
+            1101
+          ],
+          "circularity": 0.9538820374052206,
+          "eccentricity": 0.09948621023388857,
+          "solidity": 0.9666666666666667,
+          "mean_intensity": 112.9375
+        },
+        {
+          "area": 278.0,
+          "centroid": [
+            1260,
+            2480
+          ],
+          "bbox": [
+            2471,
+            1252,
+            2490,
+            1270
+          ],
+          "circularity": 1.0080120811404398,
+          "eccentricity": 0.3944972008821344,
+          "solidity": 0.9754385964912281,
+          "mean_intensity": 78.44964028776978
+        },
+        {
+          "area": 236.0,
+          "centroid": [
+            1043,
+            1036
+          ],
+          "bbox": [
+            1028,
+            1035,
+            1046,
+            1052
+          ],
+          "circularity": 1.006407450381063,
+          "eccentricity": 0.44032710100134403,
+          "solidity": 0.9711934156378601,
+          "mean_intensity": 74.79237288135593
+        }
+      ],
+      "clusters": []
+    },
+    {
+      "well_id": "E2",
+      "label": "multiple",
+      "confidence": 0.9,
+      "bead_count": 3,
+      "cluster_count": 0,
+      "bead_areas": [
+        238.0,
+        108.0,
+        97.0
+      ],
+      "reason": "3 bead(s)",
+      "beads": [
+        {
+          "area": 238.0,
+          "centroid": [
+            975,
+            1590
+          ],
+          "bbox": [
+            1582,
+            968,
+            1600,
+            985
+          ],
+          "circularity": 0.9933813165067734,
+          "eccentricity": 0.4693878909049872,
+          "solidity": 0.9635627530364372,
+          "mean_intensity": 46.37394957983193
+        },
+        {
+          "area": 108.0,
+          "centroid": [
+            972,
+            1525
+          ],
+          "bbox": [
+            1520,
+            968,
+            1533,
+            978
+          ],
+          "circularity": 1.0734931914783432,
+          "eccentricity": 0.6252069196623417,
+          "solidity": 0.9908256880733946,
+          "mean_intensity": 24.814814814814813
+        },
+        {
+          "area": 97.0,
+          "centroid": [
+            2081,
+            425
+          ],
+          "bbox": [
+            420,
+            2075,
+            431,
+            2087
+          ],
+          "circularity": 1.030977509797925,
+          "eccentricity": 0.3860971510179267,
+          "solidity": 0.9603960396039604,
+          "mean_intensity": 22.051546391752577
+        }
+      ],
+      "clusters": []
+    },
+    {
+      "well_id": "F2",
+      "label": "empty",
+      "confidence": 0.95,
+      "bead_count": 0,
+      "cluster_count": 0,
+      "bead_areas": [],
+      "reason": "No objects detected, low background",
+      "beads": [],
+      "clusters": []
+    },
+    {
+      "well_id": "G2",
+      "label": "multiple",
+      "confidence": 0.9,
+      "bead_count": 2,
+      "cluster_count": 0,
+      "bead_areas": [
+        271.0,
+        187.0
+      ],
+      "reason": "2 bead(s)",
+      "beads": [
+        {
+          "area": 271.0,
+          "centroid": [
+            1080,
+            1583
+          ],
+          "bbox": [
+            1574,
+            1072,
+            1593,
+            1090
+          ],
+          "circularity": 1.0024816078868164,
+          "eccentricity": 0.1403125945067751,
+          "solidity": 0.9748201438848921,
+          "mean_intensity": 79.85239852398524
+        },
+        {
+          "area": 187.0,
+          "centroid": [
+            1076,
+            1510
+          ],
+          "bbox": [
+            1504,
+            1069,
+            1519,
+            1085
+          ],
+          "circularity": 0.9937772903722268,
+          "eccentricity": 0.4012557143952566,
+          "solidity": 0.9639175257731959,
+          "mean_intensity": 38.893048128342244
+        }
+      ],
+      "clusters": []
+    }
+  ]
+}

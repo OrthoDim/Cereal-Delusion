@@ -1,0 +1,74 @@
+{
+  "plate_id": "CerealDelusion_Run1_A",
+  "analysis_type": "single_cell_detection",
+  "date": "2026-03-14",
+  "wells": {
+    "A1": {
+      "cell_count": 835,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    },
+    "B1": {
+      "cell_count": 335,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    },
+    "C1": {
+      "cell_count": 128,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    },
+    "D1": {
+      "cell_count": 51,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    },
+    "E1": {
+      "cell_count": 25,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    },
+    "F1": {
+      "cell_count": 6,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    },
+    "G1": {
+      "cell_count": 3,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    },
+    "H1": {
+      "cell_count": 0,
+      "label": "empty",
+      "confidence": 0.95,
+      "empty": true,
+      "flagged_for_review": false
+    }
+  },
+  "summary": {
+    "total_wells": 8,
+    "empty_wells": 1,
+    "single_wells": 0,
+    "multiple_wells": 7,
+    "multiple_clusters_wells": 0,
+    "uncertain_wells": 0,
+    "single_pct": 0.0,
+    "empty_pct": 12.5,
+    "estimated_lambda": 2.079
+  }
+}
