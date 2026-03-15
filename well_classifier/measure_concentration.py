@@ -109,7 +109,7 @@ def count_well(
     watershed_min_distance: int = 4,
 ) -> WellResult:
     """Run preprocessing + segment_beads on a single well image."""
-    gray, _quad_medians = preprocess_well_image(img)
+    gray, _quad_medians, _gray_pre_seam = preprocess_well_image(img)
 
     labeled, beads, clusters = segment_beads(
         gray, intensity_thresh,

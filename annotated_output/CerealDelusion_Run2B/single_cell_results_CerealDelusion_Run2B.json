@@ -1,7 +1,7 @@
 {
   "plate_id": "CerealDelusion_Run2B",
   "analysis_type": "single_cell_detection",
-  "date": "2026-03-14",
+  "date": "2026-03-15",
   "wells": {
     "A2": {
       "cell_count": 8,
@@ -18,7 +18,7 @@
       "flagged_for_review": false
     },
     "C2": {
-      "cell_count": 4,
+      "cell_count": 5,
       "label": "multiple",
       "confidence": 0.9,
       "empty": false,

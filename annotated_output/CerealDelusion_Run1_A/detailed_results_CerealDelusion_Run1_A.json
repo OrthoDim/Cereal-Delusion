@@ -15783,7 +15783,8 @@
           "mean_intensity": 59.55555555555556
         }
       ],
-      "clusters": []
+      "clusters": [],
+      "faint_objects": []
     },
     {
       "well_id": "B1",
@@ -22024,7 +22025,8 @@
           "mean_intensity": 74.92
         }
       ],
-      "clusters": []
+      "clusters": [],
+      "faint_objects": []
     },
     {
       "well_id": "C1",
@@ -24377,7 +24379,8 @@
           "mean_intensity": 82.86904761904762
         }
       ],
-      "clusters": []
+      "clusters": [],
+      "faint_objects": []
     },
     {
       "well_id": "D1",
@@ -25308,7 +25311,8 @@
           "mean_intensity": 78.96666666666667
         }
       ],
-      "clusters": []
+      "clusters": [],
+      "faint_objects": []
     },
     {
       "well_id": "E1",
@@ -25771,7 +25775,8 @@
           "mean_intensity": 79.36363636363636
         }
       ],
-      "clusters": []
+      "clusters": [],
+      "faint_objects": []
     },
     {
       "well_id": "F1",
@@ -25892,7 +25897,8 @@
           "mean_intensity": 145.40540540540542
         }
       ],
-      "clusters": []
+      "clusters": [],
+      "faint_objects": []
     },
     {
       "well_id": "G1",
@@ -25959,7 +25965,8 @@
           "mean_intensity": 89.14447592067988
         }
       ],
-      "clusters": []
+      "clusters": [],
+      "faint_objects": []
     },
     {
       "well_id": "H1",
@@ -25970,7 +25977,8 @@
       "bead_areas": [],
       "reason": "No objects detected",
       "beads": [],
-      "clusters": []
+      "clusters": [],
+      "faint_objects": []
     }
   ]
 }

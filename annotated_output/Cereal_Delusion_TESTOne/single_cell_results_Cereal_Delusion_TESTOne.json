@@ -1,0 +1,39 @@
+{
+  "plate_id": "Cereal_Delusion_TESTOne",
+  "analysis_type": "single_cell_detection",
+  "date": "2026-03-15",
+  "wells": {
+    "A1": {
+      "cell_count": 33,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    },
+    "B1": {
+      "cell_count": 14,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    },
+    "C1": {
+      "cell_count": 6,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    }
+  },
+  "summary": {
+    "total_wells": 3,
+    "empty_wells": 0,
+    "single_wells": 0,
+    "multiple_wells": 3,
+    "multiple_clusters_wells": 0,
+    "uncertain_wells": 0,
+    "single_pct": 0.0,
+    "empty_pct": 0.0,
+    "estimated_lambda": 0
+  }
+}

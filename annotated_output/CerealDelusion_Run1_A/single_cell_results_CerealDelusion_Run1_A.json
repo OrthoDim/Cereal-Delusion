@@ -1,7 +1,7 @@
 {
   "plate_id": "CerealDelusion_Run1_A",
   "analysis_type": "single_cell_detection",
-  "date": "2026-03-14",
+  "date": "2026-03-15",
   "wells": {
     "A1": {
       "cell_count": 835,

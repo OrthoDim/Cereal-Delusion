@@ -17264,7 +17264,8 @@
           "solidity": 0.911062906724512,
           "mean_intensity": 141.95595238095237
         }
-      ]
+      ],
+      "faint_objects": []
     },
     {
       "well_id": "B1",
@@ -24332,7 +24333,8 @@
           "solidity": 0.9134199134199135,
           "mean_intensity": 153.79905213270143
         }
-      ]
+      ],
+      "faint_objects": []
     },
     {
       "well_id": "C1",
@@ -27513,7 +27515,8 @@
           "mean_intensity": 70.3076923076923
         }
       ],
-      "clusters": []
+      "clusters": [],
+      "faint_objects": []
     },
     {
       "well_id": "D1",
@@ -28660,7 +28663,8 @@
           "mean_intensity": 82.53225806451613
         }
       ],
-      "clusters": []
+      "clusters": [],
+      "faint_objects": []
     },
     {
       "well_id": "E1",
@@ -29357,7 +29361,8 @@
           "mean_intensity": 74.54716981132076
         }
       ],
-      "clusters": []
+      "clusters": [],
+      "faint_objects": []
     },
     {
       "well_id": "F1",
@@ -29676,7 +29681,8 @@
           "mean_intensity": 106.31428571428572
         }
       ],
-      "clusters": []
+      "clusters": [],
+      "faint_objects": []
     },
     {
       "well_id": "G1",
@@ -29797,7 +29803,8 @@
           "mean_intensity": 128.34408602150538
         }
       ],
-      "clusters": []
+      "clusters": [],
+      "faint_objects": []
     },
     {
       "well_id": "H1",
@@ -29882,7 +29889,8 @@
           "mean_intensity": 56.056
         }
       ],
-      "clusters": []
+      "clusters": [],
+      "faint_objects": []
     }
   ]
 }

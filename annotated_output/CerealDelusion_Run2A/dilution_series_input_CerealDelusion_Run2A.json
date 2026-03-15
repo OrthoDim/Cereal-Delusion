@@ -1,0 +1,46 @@
+{
+  "plate_id": "CerealDelusion_Run2A",
+  "stock_label": "bead stock",
+  "dilution_series": [
+    {
+      "well_id": "A1",
+      "dilution_factor": 2.0,
+      "volume_ul": 200.0
+    },
+    {
+      "well_id": "B1",
+      "dilution_factor": 4.0,
+      "volume_ul": 200.0
+    },
+    {
+      "well_id": "C1",
+      "dilution_factor": 8.0,
+      "volume_ul": 200.0
+    },
+    {
+      "well_id": "D1",
+      "dilution_factor": 16.0,
+      "volume_ul": 200.0
+    },
+    {
+      "well_id": "E1",
+      "dilution_factor": 32.0,
+      "volume_ul": 200.0
+    },
+    {
+      "well_id": "F1",
+      "dilution_factor": 64.0,
+      "volume_ul": 200.0
+    },
+    {
+      "well_id": "G1",
+      "dilution_factor": 128.0,
+      "volume_ul": 200.0
+    },
+    {
+      "well_id": "H1",
+      "dilution_factor": 256.0,
+      "volume_ul": 200.0
+    }
+  ]
+}

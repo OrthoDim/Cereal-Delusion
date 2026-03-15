@@ -45,6 +45,7 @@ class WellResult:
     reason: str
     beads: list[dict] = field(default_factory=list)
     clusters: list[dict] = field(default_factory=list)
+    faint_objects: list[dict] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -104,12 +105,15 @@ def normalize_quadrants(gray: np.ndarray) -> tuple[np.ndarray, list[float]]:
 def mask_seams(gray: np.ndarray, medians: list[float], seam_w: int = 60) -> np.ndarray:
     """Zero out stitching seams between quadrants with large intensity mismatch.
 
+    Only masks the half of the seam where the mismatch actually occurs, so a
+    TL/TR mismatch won't blank the bottom half of the vertical seam.
+
     Must be called AFTER resize so the mask covers the full seam width at
     detection resolution (resize interpolation can smear pre-resize masks).
     """
     h, w = gray.shape
     mh, mw = h // 2, w // 2
-    ratio_thresh = 3.0
+    ratio_thresh = 5.0
     med_tl, med_tr, med_bl, med_br = medians
 
     def _mismatch(a: float, b: float) -> bool:
@@ -117,14 +121,20 @@ def mask_seams(gray: np.ndarray, medians: list[float], seam_w: int = 60) -> np.n
         return hi / max(lo, 0.5) > ratio_thresh
 
     out = gray.copy()
-    if _mismatch(med_tl, med_tr) or _mismatch(med_bl, med_br):
-        x0 = max(0, mw - seam_w)
-        x1 = min(w, mw + seam_w + 1)
-        out[:, x0:x1] = 0
-    if _mismatch(med_tl, med_bl) or _mismatch(med_tr, med_br):
-        y0 = max(0, mh - seam_w)
-        y1 = min(h, mh + seam_w + 1)
-        out[y0:y1, :] = 0
+    x0 = max(0, mw - seam_w)
+    x1 = min(w, mw + seam_w + 1)
+    # Vertical seam — mask each half independently
+    if _mismatch(med_tl, med_tr):
+        out[:mh, x0:x1] = 0
+    if _mismatch(med_bl, med_br):
+        out[mh:, x0:x1] = 0
+    # Horizontal seam — mask each half independently
+    y0 = max(0, mh - seam_w)
+    y1 = min(h, mh + seam_w + 1)
+    if _mismatch(med_tl, med_bl):
+        out[y0:y1, :mw] = 0
+    if _mismatch(med_tr, med_br):
+        out[y0:y1, mw:] = 0
     return out
 
 
@@ -151,7 +161,7 @@ def well_roi_mask(gray: np.ndarray,
 # Preprocessing pipeline
 # ---------------------------------------------------------------------------
 
-def preprocess_well_image(img: np.ndarray, reference_dim: int = REFERENCE_DIM) -> tuple[np.ndarray, list[float]]:
+def preprocess_well_image(img: np.ndarray, reference_dim: int = REFERENCE_DIM) -> tuple[np.ndarray, list[float], np.ndarray]:
     """Consolidate grayscale conversion, quadrant normalization, resize, seam
     masking, and well ROI masking into a single call.
 
@@ -173,13 +183,15 @@ def preprocess_well_image(img: np.ndarray, reference_dim: int = REFERENCE_DIM) -
         gray = cv2.resize(gray, (int(w * scale), int(h * scale)),
                           interpolation=cv2.INTER_AREA if scale < 1 else cv2.INTER_LINEAR)
 
-    # Mask seams AFTER resize
+    # Mask seams AFTER resize — but keep pre-mask copy for rescue
+    gray_pre_seam = gray.copy()
     gray = mask_seams(gray, quad_medians)
 
     # Mask outside well
     gray = well_roi_mask(gray)
+    gray_pre_seam = well_roi_mask(gray_pre_seam)
 
-    return gray, quad_medians
+    return gray, quad_medians, gray_pre_seam
 
 
 # ---------------------------------------------------------------------------
@@ -275,6 +287,30 @@ def segment_beads(
 
 
 # ---------------------------------------------------------------------------
+# Merged-bead intensity profile check
+# ---------------------------------------------------------------------------
+
+def check_multimodal_intensity(
+    gray: np.ndarray,
+    labeled: np.ndarray,
+    bead: BeadInfo,
+    bead_label: int,
+    min_peak_distance: int = 5,
+) -> int:
+    """Count intensity peaks within a single bead mask.
+
+    Returns the number of local maxima found. >=2 suggests merged beads.
+    """
+    mask = labeled == bead_label
+    r0, c0, r1, c1 = bead.bbox[1], bead.bbox[0], bead.bbox[3], bead.bbox[2]
+    crop = gray[r0:r1, c0:c1].copy()
+    crop_mask = mask[r0:r1, c0:c1]
+    crop[~crop_mask] = 0
+    coords = peak_local_max(crop, min_distance=min_peak_distance, labels=crop_mask)
+    return len(coords)
+
+
+# ---------------------------------------------------------------------------
 # File loading
 # ---------------------------------------------------------------------------
 
@@ -342,6 +378,47 @@ def load_well_images(
 
 
 # ---------------------------------------------------------------------------
+# Per-bead confidence scoring (for visualization)
+# ---------------------------------------------------------------------------
+
+def _bead_confidence(bead: dict) -> float:
+    """Score an individual bead's detection confidence (0–1).
+
+    Used to color-code annotations: high → green, low → yellow.
+    """
+    conf = 0.70
+    circ = bead.get("circularity", 0)
+    if circ > 0.85:
+        conf += 0.15
+    elif circ > 0.70:
+        conf += 0.08
+    sol = bead.get("solidity", 0)
+    if sol > 0.90:
+        conf += 0.10
+    elif sol > 0.80:
+        conf += 0.05
+    ecc = bead.get("eccentricity", 0)
+    if ecc > 0.80:
+        conf -= 0.15
+    elif ecc > 0.60:
+        conf -= 0.07
+    mi = bead.get("mean_intensity", 255)
+    if mi < 60:
+        conf -= 0.15
+    elif mi < 100:
+        conf -= 0.07
+    return max(0.0, min(conf, 1.0))
+
+
+def _bead_color(bead: dict, conf_threshold: float = 0.70) -> tuple[int, int, int]:
+    """Return BGR color for a bead: green if confident, yellow if uncertain."""
+    conf = _bead_confidence(bead)
+    if conf >= conf_threshold:
+        return (0, 255, 0)      # green
+    return (0, 255, 255)        # yellow
+
+
+# ---------------------------------------------------------------------------
 # Visualization
 # ---------------------------------------------------------------------------
 
@@ -377,12 +454,23 @@ def debug_overlay(
         for bead in result.beads:
             cx, cy = bead["centroid"][1], bead["centroid"][0]
             radius = int(np.sqrt(bead["area"] / np.pi)) + 5
-            cv2.circle(vis, (cx, cy), radius, color, 2)
-            circ = bead["circularity"]
-            cv2.putText(vis, f"c={circ:.2f}", (cx + radius + 2, cy),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
+            bcolor = _bead_color(bead)
+            cv2.circle(vis, (cx, cy), radius, bcolor, 2)
+            bconf = _bead_confidence(bead)
+            cv2.putText(vis, f"c={bead['circularity']:.2f} {bconf:.0%}",
+                        (cx + radius + 2, cy),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, bcolor, 1)
+
+        for faint in result.faint_objects:
+            cx, cy = faint["centroid"][1], faint["centroid"][0]
+            radius = int(np.sqrt(faint["area"] / np.pi)) + 5
+            cv2.circle(vis, (cx, cy), radius, (0, 255, 255), 2)
+            cv2.putText(vis, "faint", (cx + radius + 2, cy),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
 
         label_text = f"{well_id}: {result.label} ({result.confidence:.2f}) n={result.bead_count}"
+        if result.faint_objects:
+            label_text += f" +{len(result.faint_objects)} faint"
         cv2.putText(vis, label_text, (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
 
@@ -414,15 +502,29 @@ def annotated_bead_image(
     for bead in result.beads:
         cx, cy = bead["centroid"][1], bead["centroid"][0]
         radius = int(np.sqrt(bead["area"] / np.pi)) + 8
-        cv2.circle(vis, (cx, cy), radius, (0, 255, 0), 2)
+        color = _bead_color(bead)
+        cv2.circle(vis, (cx, cy), radius, color, 2)
+        bconf = _bead_confidence(bead)
+        cv2.putText(vis, f"{bconf:.0%}", (cx + radius + 2, cy),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
 
     for cluster in result.clusters:
         cx, cy = cluster["centroid"][1], cluster["centroid"][0]
         radius = int(np.sqrt(cluster["area"] / np.pi)) + 8
         cv2.circle(vis, (cx, cy), radius, (0, 100, 255), 2)
 
+    # Faint objects from sensitive pass — yellow dashed-style circles
+    for faint in result.faint_objects:
+        cx, cy = faint["centroid"][1], faint["centroid"][0]
+        radius = int(np.sqrt(faint["area"] / np.pi)) + 8
+        cv2.circle(vis, (cx, cy), radius, (0, 255, 255), 2)
+        cv2.putText(vis, "faint", (cx + radius + 2, cy),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
+
+    n_faint = len(result.faint_objects)
+    faint_str = f" | {n_faint} faint" if n_faint else ""
     label_text = (f"{well_id}: {result.label} | {result.bead_count} bead(s) "
-                  f"| {result.cluster_count} cluster(s) | conf={result.confidence:.2f}")
+                  f"| {result.cluster_count} cluster(s){faint_str} | conf={result.confidence:.2f}")
     cv2.putText(vis, label_text, (10, 30),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 

@@ -1,14 +1,14 @@
 {
   "plate_id": "CerealDelusion_Run2A",
   "analysis_type": "dilution_series_concentration",
-  "date": "2026-03-14",
+  "date": "2026-03-15",
   "dilution_series": [
     {
       "well_id": "A1",
       "bead_count": 945,
       "cluster_count": 14,
-      "dilution_factor": 1,
-      "volume_ul": 100,
+      "dilution_factor": 2.0,
+      "volume_ul": 200.0,
       "excluded": true,
       "exclusion_reason": "bead count (945) exceeds max reliable (500)",
       "estimated_stock_conc": null
@@ -17,8 +17,8 @@
       "well_id": "B1",
       "bead_count": 390,
       "cluster_count": 2,
-      "dilution_factor": 2,
-      "volume_ul": 100,
+      "dilution_factor": 4.0,
+      "volume_ul": 200.0,
       "excluded": false,
       "exclusion_reason": null,
       "estimated_stock_conc": 7.8
@@ -27,8 +27,8 @@
       "well_id": "C1",
       "bead_count": 176,
       "cluster_count": 0,
-      "dilution_factor": 4,
-      "volume_ul": 100,
+      "dilution_factor": 8.0,
+      "volume_ul": 200.0,
       "excluded": false,
       "exclusion_reason": null,
       "estimated_stock_conc": 7.04
@@ -37,8 +37,8 @@
       "well_id": "D1",
       "bead_count": 63,
       "cluster_count": 0,
-      "dilution_factor": 8,
-      "volume_ul": 100,
+      "dilution_factor": 16.0,
+      "volume_ul": 200.0,
       "excluded": false,
       "exclusion_reason": null,
       "estimated_stock_conc": 5.04
@@ -47,8 +47,8 @@
       "well_id": "E1",
       "bead_count": 38,
       "cluster_count": 0,
-      "dilution_factor": 16,
-      "volume_ul": 100,
+      "dilution_factor": 32.0,
+      "volume_ul": 200.0,
       "excluded": false,
       "exclusion_reason": null,
       "estimated_stock_conc": 6.08
@@ -57,8 +57,8 @@
       "well_id": "F1",
       "bead_count": 17,
       "cluster_count": 0,
-      "dilution_factor": 32,
-      "volume_ul": 100,
+      "dilution_factor": 64.0,
+      "volume_ul": 200.0,
       "excluded": false,
       "exclusion_reason": null,
       "estimated_stock_conc": 5.44
@@ -67,8 +67,8 @@
       "well_id": "G1",
       "bead_count": 6,
       "cluster_count": 0,
-      "dilution_factor": 64,
-      "volume_ul": 100,
+      "dilution_factor": 128.0,
+      "volume_ul": 200.0,
       "excluded": false,
       "exclusion_reason": null,
       "estimated_stock_conc": 3.84
@@ -77,8 +77,8 @@
       "well_id": "H1",
       "bead_count": 4,
       "cluster_count": 0,
-      "dilution_factor": 128,
-      "volume_ul": 100,
+      "dilution_factor": 256.0,
+      "volume_ul": 200.0,
       "excluded": false,
       "exclusion_reason": null,
       "estimated_stock_conc": 5.12
@@ -96,7 +96,7 @@
   },
   "recommendation": {
     "target_cells_per_well": 1.0,
-    "recommended_dilution_factor": 540.0,
+    "recommended_dilution_factor": 1080.0,
     "closest_existing_well": "H1",
     "closest_existing_well_count": 4
   }

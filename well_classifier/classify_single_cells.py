@@ -26,6 +26,7 @@ from .core import (
     BeadInfo, WellResult, REFERENCE_DIM, DEFAULTS, WELL_ROWS, WELL_COLS,
     preprocess_well_image, segment_beads, load_well_images,
     debug_overlay, annotated_bead_image, results_to_mcp_payload,
+    check_multimodal_intensity,
 )
 
 
@@ -44,7 +45,7 @@ def classify_well(
     **_kwargs,
 ) -> WellResult:
     """Classify a single well image for single-cell detection."""
-    gray, _quad_medians = preprocess_well_image(image)
+    gray, _quad_medians, _gray_pre_seam = preprocess_well_image(image)
 
     labeled, beads, clusters = segment_beads(
         gray, intensity_thresh,
@@ -58,45 +59,104 @@ def classify_well(
     cluster_count = len(clusters)
     total_objects = bead_count + cluster_count
 
+    result = None
+
     if total_objects == 0:
         mean_val = gray.mean()
         if mean_val < 15:
-            return WellResult(well_id, "empty", 0.95, 0, 0, areas,
-                              "No objects detected, low background",
-                              bead_dicts, cluster_dicts)
+            result = WellResult(well_id, "empty", 0.95, 0, 0, areas,
+                                "No objects detected, low background",
+                                bead_dicts, cluster_dicts)
         else:
-            return WellResult(well_id, "uncertain", 0.40, 0, 0, areas,
-                              f"No objects but elevated background (mean={mean_val:.1f})",
-                              bead_dicts, cluster_dicts)
+            result = WellResult(well_id, "uncertain", 0.40, 0, 0, areas,
+                                f"No objects but elevated background (mean={mean_val:.1f})",
+                                bead_dicts, cluster_dicts)
 
-    parts = []
-    if bead_count:
-        parts.append(f"{bead_count} bead(s)")
-    if cluster_count:
-        parts.append(f"{cluster_count} cluster(s)")
-    reason = ", ".join(parts)
+    if result is None:
+        parts = []
+        if bead_count:
+            parts.append(f"{bead_count} bead(s)")
+        if cluster_count:
+            parts.append(f"{cluster_count} cluster(s)")
+        reason = ", ".join(parts)
 
-    if total_objects == 1 and cluster_count == 0:
-        conf = _single_confidence(beads[0])
-        return WellResult(well_id, "single", conf, 1, 0, areas, reason,
-                          bead_dicts, cluster_dicts)
+        if total_objects == 1 and cluster_count == 0:
+            conf = _single_confidence(beads[0])
+            # Check for merged beads via intensity profile
+            peak_count = check_multimodal_intensity(
+                gray, labeled, beads[0], 1, min_peak_distance=5,
+            )
+            if peak_count >= 2:
+                conf -= 0.15
+                reason += f" (multi-peak={peak_count})"
+            if conf < 0.60:
+                result = WellResult(well_id, "uncertain", conf, 1, 0, areas,
+                                    reason, bead_dicts, cluster_dicts)
+            else:
+                result = WellResult(well_id, "single", conf, 1, 0, areas,
+                                    reason, bead_dicts, cluster_dicts)
 
-    # Check for split artifact when exactly 2 beads, no clusters
-    if bead_count == 2 and cluster_count == 0:
-        dist = np.sqrt(
-            (beads[0].centroid[0] - beads[1].centroid[0]) ** 2
-            + (beads[0].centroid[1] - beads[1].centroid[1]) ** 2
+    if result is None:
+        parts = []
+        if bead_count:
+            parts.append(f"{bead_count} bead(s)")
+        if cluster_count:
+            parts.append(f"{cluster_count} cluster(s)")
+        reason = ", ".join(parts)
+
+        # Check for split artifact when exactly 2 beads, no clusters
+        if bead_count == 2 and cluster_count == 0:
+            dist = np.sqrt(
+                (beads[0].centroid[0] - beads[1].centroid[0]) ** 2
+                + (beads[0].centroid[1] - beads[1].centroid[1]) ** 2
+            )
+            avg_r = np.sqrt(np.mean([b.area for b in beads]) / np.pi)
+            if dist < avg_r * 2.5:
+                result = WellResult(well_id, "uncertain", 0.50, 2, 0, areas,
+                                    f"Two objects very close (dist={dist:.0f}px), "
+                                    "may be one bead split by threshold",
+                                    bead_dicts, cluster_dicts)
+
+    if result is None:
+        label = "multiple_clusters" if cluster_count > 0 else "multiple"
+        result = WellResult(well_id, label, 0.90, bead_count, cluster_count,
+                            areas, reason, bead_dicts, cluster_dicts)
+
+    # Sensitive resegment pass — find faint objects missed by primary threshold
+    primary_centroids = [b.centroid for b in beads + clusters]
+    sensitive_beads, sensitive_clusters = _sensitive_resegment(gray)
+    sensitive_all = sensitive_beads + sensitive_clusters
+    faint_dicts = []
+    for sb in sensitive_all:
+        sc = sb.centroid
+        is_new = True
+        for pc in primary_centroids:
+            dist = np.sqrt((sc[0] - pc[0]) ** 2 + (sc[1] - pc[1]) ** 2)
+            if dist < 30:
+                is_new = False
+                break
+        if is_new:
+            faint_dicts.append(asdict(sb))
+    result.faint_objects.extend(faint_dicts)
+
+    sensitive_total = len(sensitive_all)
+    # Reclassify empty/single if sensitive pass found objects
+    if result.label == "empty" and sensitive_total > 0:
+        result = WellResult(
+            result.well_id, "uncertain", 0.45,
+            result.bead_count, result.cluster_count, result.bead_areas,
+            result.reason + f" (sensitive pass found {sensitive_total} object(s))",
+            result.beads, result.clusters, faint_dicts,
         )
-        avg_r = np.sqrt(np.mean([b.area for b in beads]) / np.pi)
-        if dist < avg_r * 2.5:
-            return WellResult(well_id, "uncertain", 0.50, 2, 0, areas,
-                              f"Two objects very close (dist={dist:.0f}px), "
-                              "may be one bead split by threshold",
-                              bead_dicts, cluster_dicts)
+    elif result.label == "single" and sensitive_total > 1:
+        result = WellResult(
+            result.well_id, "uncertain", 0.50,
+            result.bead_count, result.cluster_count, result.bead_areas,
+            result.reason + f" (sensitive pass found {sensitive_total} object(s))",
+            result.beads, result.clusters, faint_dicts,
+        )
 
-    label = "multiple_clusters" if cluster_count > 0 else "multiple"
-    return WellResult(well_id, label, 0.90, bead_count, cluster_count, areas,
-                      reason, bead_dicts, cluster_dicts)
+    return result
 
 
 def _single_confidence(bead: BeadInfo) -> float:
@@ -110,7 +170,66 @@ def _single_confidence(bead: BeadInfo) -> float:
         conf += 0.10
     elif bead.solidity > 0.80:
         conf += 0.05
+    # Penalize elongated objects — merged beads form ellipses
+    if bead.eccentricity > 0.80:
+        conf -= 0.15
+    elif bead.eccentricity > 0.60:
+        conf -= 0.07
     return min(conf, 0.98)
+
+
+def _sensitive_resegment(
+    gray: np.ndarray,
+    min_area: int = 15,
+    min_circularity: float = 0.40,
+    sensitivity_factor: float = 0.5,
+) -> tuple[list, list]:
+    """Re-segment with a lower threshold to catch faint cells.
+
+    Returns (beads, clusters) from the sensitive pass.
+    """
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    otsu_val, _ = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    sensitive_thresh = max(15, int(otsu_val * sensitivity_factor))
+    _, beads, clusters = segment_beads(
+        gray, intensity_thresh=sensitive_thresh,
+        min_area=min_area, max_area=800,
+        min_distance=4, min_circularity=min_circularity,
+    )
+    return beads, clusters
+
+
+def _apply_area_anomaly_scoring(
+    results: list,
+    area_ratio_threshold: float = 1.5,
+) -> None:
+    """Post-process plate results: flag single wells with anomalously large area.
+
+    Modifies results in place.
+    """
+    single_areas = []
+    single_indices = []
+    for i, r in enumerate(results):
+        if r.label == "single" and r.bead_areas:
+            single_areas.append(r.bead_areas[0])
+            single_indices.append(i)
+
+    if len(single_areas) < 3:
+        return
+
+    median_area = float(np.median(single_areas))
+
+    for idx in single_indices:
+        r = results[idx]
+        if r.bead_areas[0] > median_area * area_ratio_threshold:
+            new_conf = r.confidence - 0.15
+            new_label = "uncertain" if new_conf < 0.60 else r.label
+            results[idx] = WellResult(
+                r.well_id, new_label, new_conf,
+                r.bead_count, r.cluster_count, r.bead_areas,
+                r.reason + f" (area {r.bead_areas[0]} > {area_ratio_threshold}x median {median_area:.0f})",
+                r.beads, r.clusters,
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -133,6 +252,8 @@ def classify_plate(
         print(f"  {well_id}: {result.label} "
               f"(conf={result.confidence:.2f}, beads={result.bead_count}, "
               f"clusters={result.cluster_count})")
+
+    _apply_area_anomaly_scoring(results)
 
     return results, source_paths
 
@@ -214,6 +335,8 @@ def main():
                         default=DEFAULTS["min_circularity"])
     parser.add_argument("--mcp", action="store_true",
                         help="Include MCP upload payload in output")
+    parser.add_argument("--upload", action="store_true",
+                        help="Upload results to Monomer Cloud after classification")
 
     args = parser.parse_args()
 
@@ -285,6 +408,12 @@ def main():
     print(f"Multiple+Clust:  {summary['multiple_clusters_wells']}")
     print(f"Uncertain:       {summary['uncertain_wells']}")
     print(f"Estimated lambda: {summary['estimated_lambda']}")
+
+    # Upload to Monomer Cloud
+    if args.upload:
+        print("\nUploading results to Monomer Cloud...")
+        from data_pipeline.upload_results import upload_results
+        upload_results(detailed, barcode)
 
 
 if __name__ == "__main__":
