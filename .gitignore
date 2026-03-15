@@ -28,7 +28,7 @@ env/
 Thumbs.db
 
 # Claude Code
-.claude/skills/
+.claude/settings.local.json
 
 # Environment
 .env

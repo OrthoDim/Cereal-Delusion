@@ -1,0 +1,67 @@
+{
+  "plate_id": "CerealDelusion_Run2B",
+  "analysis_type": "single_cell_detection",
+  "date": "2026-03-14",
+  "wells": {
+    "A2": {
+      "cell_count": 8,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    },
+    "B2": {
+      "cell_count": 5,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    },
+    "C2": {
+      "cell_count": 4,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    },
+    "D2": {
+      "cell_count": 3,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    },
+    "E2": {
+      "cell_count": 3,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    },
+    "F2": {
+      "cell_count": 0,
+      "label": "empty",
+      "confidence": 0.95,
+      "empty": true,
+      "flagged_for_review": false
+    },
+    "G2": {
+      "cell_count": 2,
+      "label": "multiple",
+      "confidence": 0.9,
+      "empty": false,
+      "flagged_for_review": false
+    }
+  },
+  "summary": {
+    "total_wells": 7,
+    "empty_wells": 1,
+    "single_wells": 0,
+    "multiple_wells": 6,
+    "multiple_clusters_wells": 0,
+    "uncertain_wells": 0,
+    "single_pct": 0.0,
+    "empty_pct": 14.3,
+    "estimated_lambda": 1.946
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "_comment": "Example output from measure_concentration.",
+  "plate_id": "CerealDelusion_Run1_A",
+  "analysis_type": "dilution_series_concentration",
+  "date": "2026-03-14",
+  "dilution_series": [
+    {
+      "well_id": "A1", "bead_count": 835, "cluster_count": 33,
+      "dilution_factor": 2, "volume_ul": 200,
+      "estimated_stock_conc": 8350.0,
+      "excluded": true, "exclusion_reason": "high cluster ratio"
+    },
+    {
+      "well_id": "B1", "bead_count": 360, "cluster_count": 5,
+      "dilution_factor": 4, "volume_ul": 200,
+      "estimated_stock_conc": 7200.0,
+      "excluded": false, "exclusion_reason": null
+    }
+  ],
+  "concentration_estimate": {
+    "stock_concentration_cells_per_ul": {
+      "median_estimate": 7200.0,
+      "linear_fit_estimate": 7150.0,
+      "r_squared": 0.9873
+    },
+    "wells_used": 5,
+    "wells_excluded": 3,
+    "unit": "cells/uL"
+  },
+  "recommendation": {
+    "target_cells_per_well": 1,
+    "recommended_dilution_factor": 1440000,
+    "closest_existing_well": "G1",
+    "closest_existing_well_count": 3
+  }
+}
